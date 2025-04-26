@@ -10,11 +10,11 @@ A Java-based horse racing simulation application that features customizable trac
 1. Clone the repository
 2. Navigate to the project dircetory: ```cd "Part1"```
 3. Compile the Java files:```javac *.java```
-4. To start the application, run: ```main.java```
+4. To start the application, run: ```java main.java```
 
 # Part 2 # 
 ## Installation ## 
 1. Clone the repository
 2. Navigate to the project dircetory: ```cd "Part2"```
 3. Compile the Java files:```javac *.java```
-4. To start the application, run: ```main.java```
+4. To start the application, run: ```java main.java```
