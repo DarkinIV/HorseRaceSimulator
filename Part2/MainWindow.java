@@ -8,9 +8,19 @@ public class MainWindow extends JFrame {
     private JButton barnButton;
     private JButton trackButton;
     private JButton raceButton;
+    private JButton statsButton;
+    private JLabel balanceLabel;
+    private User currentUser;
     
     public MainWindow() {
-        setTitle("Horse Racing Game");
+        // Show login dialog
+        String username = JOptionPane.showInputDialog(this, "Enter your username:", "Login", JOptionPane.PLAIN_MESSAGE);
+        if (username == null || username.trim().isEmpty()) {
+            System.exit(0);
+        }
+        currentUser = UserManager.loginUser(username.trim());
+        
+        setTitle("Horse Racing Game - User: " + currentUser.getUsername() + " (Balance: $" + currentUser.getBalance() + ")");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(900, 700);
         setLocationRelativeTo(null);
@@ -30,29 +40,40 @@ public class MainWindow extends JFrame {
         
         // Create button panel with modern styling
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(3, 1, 20, 20));
+        buttonPanel.setLayout(new GridLayout(4, 1, 20, 20));
         buttonPanel.setBorder(new EmptyBorder(20, 200, 40, 200));
         buttonPanel.setOpaque(false);
         
+        // Create balance label with modern styling
+        balanceLabel = new JLabel(String.format("Balance: $%.2f", currentUser.getBalance()));
+        balanceLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        UITheme.styleLabel(balanceLabel);
+        balanceLabel.setBorder(new EmptyBorder(10, 0, 0, 20));
+        mainPanel.add(balanceLabel, BorderLayout.NORTH);
+
         // Initialize buttons with modern styling
         barnButton = new JButton("🐎  Visit Barn");
         trackButton = new JButton("🏁  Track Selection");
         raceButton = new JButton("⚡  Start Race");
+        statsButton = new JButton("📊  Betting Stats");
         
         // Apply modern styling to buttons
         UITheme.styleButton(barnButton);
         UITheme.styleButton(trackButton);
         UITheme.styleButton(raceButton);
+        UITheme.styleButton(statsButton);
         
         // Add action listeners
         barnButton.addActionListener(e -> visitBarn());
         trackButton.addActionListener(e -> selectTrack());
         raceButton.addActionListener(e -> startRace());
+        statsButton.addActionListener(e -> showBettingStats());
         
         // Add buttons to panel
         buttonPanel.add(barnButton);
         buttonPanel.add(trackButton);
         buttonPanel.add(raceButton);
+        buttonPanel.add(statsButton);
         
         // Add components to main panel
         mainPanel.add(titleLabel, BorderLayout.NORTH);
@@ -120,6 +141,23 @@ public class MainWindow extends JFrame {
         trackFrame.setVisible(true);
     }
     
+    private void updateBalance() {
+        balanceLabel.setText(String.format("Balance: $%.2f", currentUser.getBalance()));
+        setTitle("Horse Racing Game - User: " + currentUser.getUsername() + " (Balance: $" + currentUser.getBalance() + ")");
+    }
+
+    private void showBettingStats() {
+        JFrame statsFrame = new JFrame("Betting Statistics");
+        statsFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        statsFrame.setSize(400, 300);
+        statsFrame.setLocationRelativeTo(this);
+        
+        BettingStatsPanel statsPanel = new BettingStatsPanel(currentUser);
+        statsFrame.add(statsPanel);
+        
+        statsFrame.setVisible(true);
+    }
+
     private void startRace() {
         // Load available horses and tracks
         java.util.List<Horse> availableHorses = loadHorses();
@@ -144,7 +182,7 @@ public class MainWindow extends JFrame {
         // Create race setup dialog
         JDialog setupDialog = new JDialog(this, "Race Setup", true);
         setupDialog.setLayout(new BorderLayout(10, 10));
-        setupDialog.setSize(400, 500);
+        setupDialog.setSize(400, 400);
         setupDialog.setLocationRelativeTo(this);
 
         // Create selection panels
@@ -190,10 +228,10 @@ public class MainWindow extends JFrame {
 
         // Add buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton startButton = new JButton("Start Race");
+        JButton nextButton = new JButton("Next");
         JButton cancelButton = new JButton("Cancel");
 
-        startButton.addActionListener(e -> {
+        nextButton.addActionListener(e -> {
             // Get selected track
             Track selectedTrack = (Track) trackBox.getSelectedItem();
 
@@ -233,20 +271,83 @@ public class MainWindow extends JFrame {
             // Close setup dialog
             setupDialog.dispose();
 
-            // Create and show race window
-            JFrame raceFrame = new JFrame("Horse Race");
-            raceFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            raceFrame.setSize(800, 600);
-            raceFrame.setLocationRelativeTo(this);
+            // Show betting dialog
+            JDialog bettingDialog = new JDialog(this, "Place Your Bet", true);
+            bettingDialog.setLayout(new BorderLayout(10, 10));
+            bettingDialog.setSize(350, 250);
+            bettingDialog.setLocationRelativeTo(this);
 
-            RacePanel racePanel = new RacePanel(selectedTrack, selectedHorses);
-            raceFrame.add(racePanel);
-            raceFrame.setVisible(true);
+            JPanel bettingPanel = new JPanel(new GridLayout(0, 1, 10, 10));
+            bettingPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+            UITheme.stylePanel(bettingPanel);
+
+            JLabel balanceLabel = new JLabel("Current Balance: $" + currentUser.getBalance());
+            UITheme.styleLabel(balanceLabel);
+            
+            JLabel selectHorseLabel = new JLabel("Select Horse to Bet on:");
+            UITheme.styleLabel(selectHorseLabel);
+            
+            JComboBox<Horse> betHorseBox = new JComboBox<>(selectedHorses.toArray(new Horse[0]));
+            betHorseBox.setRenderer(new DefaultListCellRenderer() {
+                @Override
+                public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                    if (value instanceof Horse) {
+                        setText(((Horse) value).getName());
+                    }
+                    return this;
+                }
+            });
+            
+            JLabel betAmountLabel = new JLabel("Bet Amount:");
+            UITheme.styleLabel(betAmountLabel);
+            
+            JSpinner betAmount = new JSpinner(new SpinnerNumberModel(10, 1, currentUser.getBalance(), 5));
+
+            bettingPanel.add(balanceLabel);
+            bettingPanel.add(selectHorseLabel);
+            bettingPanel.add(betHorseBox);
+            bettingPanel.add(betAmountLabel);
+            bettingPanel.add(betAmount);
+
+            JPanel betButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            JButton startRaceButton = new JButton("Start Race");
+            JButton cancelBetButton = new JButton("Cancel");
+            UITheme.styleButton(startRaceButton);
+            UITheme.styleButton(cancelBetButton);
+
+            startRaceButton.addActionListener(ev -> {
+                bettingDialog.dispose();
+
+                // Create and show race window
+                JFrame raceFrame = new JFrame("Horse Race");
+                raceFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                raceFrame.setSize(800, 600);
+                raceFrame.setLocationRelativeTo(this);
+
+                Horse selectedBetHorse = (Horse) betHorseBox.getSelectedItem();
+                double selectedBetAmount = ((Number) betAmount.getValue()).doubleValue();
+                RacePanel racePanel = new RacePanel(selectedTrack, selectedHorses, currentUser, selectedBetHorse, selectedBetAmount);
+                raceFrame.add(racePanel);
+                raceFrame.setVisible(true);
+                
+                // Update title to reflect new balance
+                updateBalance();
+            });
+
+            cancelBetButton.addActionListener(ev -> bettingDialog.dispose());
+
+            betButtonPanel.add(startRaceButton);
+            betButtonPanel.add(cancelBetButton);
+
+            bettingDialog.add(bettingPanel, BorderLayout.CENTER);
+            bettingDialog.add(betButtonPanel, BorderLayout.SOUTH);
+            bettingDialog.setVisible(true);
         });
 
         cancelButton.addActionListener(e -> setupDialog.dispose());
 
-        buttonPanel.add(startButton);
+        buttonPanel.add(nextButton);
         buttonPanel.add(cancelButton);
 
         // Add components to dialog

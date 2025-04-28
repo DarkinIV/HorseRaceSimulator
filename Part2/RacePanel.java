@@ -20,11 +20,18 @@ public class RacePanel extends JPanel {
     private JPanel raceTrackPanel;
     private Map<Horse, PerformanceMetricsPanel> metricsMap;
     private Map<Horse, RaceStatistics> statisticsMap;
+    private User currentUser;
+    private Horse bettingHorse;
+    private double betAmount;
     private static final int TRACK_HEIGHT = 400;
     private static final int LANE_HEIGHT = 90;
     private static final int HORSE_SIZE = 48;
 
-    public RacePanel(Track track, List<Horse> selectedHorses) {
+    public RacePanel(Track track, List<Horse> selectedHorses, User user, Horse bettingHorse, double betAmount) {
+        this.currentUser = user;
+        this.bettingHorse = bettingHorse;
+        this.betAmount = betAmount;
+        currentUser.placeBet(betAmount);
         this.track = track;
         this.horses = new ArrayList<>(selectedHorses);
         this.horsePositions = new ArrayList<>();
@@ -245,14 +252,31 @@ public class RacePanel extends JPanel {
                 // Save all horses back to maintain the complete list
                 HorseManager.saveHorses(allHorses);
                 
-                // Update the display with race results
-                statusLabel.setText(finalWinner.getName() + " wins the race!");
-                JOptionPane.showMessageDialog(this,
-                    finalWinner.getName() + " has won the race!\n" +
-                    "New confidence level: " + String.format("%.2f", finalWinner.getConfidence()) + "\n" +
-                    "Races won: " + finalWinner.getRacesWon() + " of " + finalWinner.getRacesAttended(),
-                    "Race Finished",
-                    JOptionPane.INFORMATION_MESSAGE);
+                // Handle betting results
+                if (finalWinner == bettingHorse) {
+                    double winnings = betAmount * 2; // Simple 2x payout
+                    currentUser.winBet(winnings);
+                    statusLabel.setText(finalWinner.getName() + " wins! You won $" + winnings + "!");
+                    JOptionPane.showMessageDialog(this,
+                        finalWinner.getName() + " has won the race!\n" +
+                        "You won $" + winnings + "!\n" +
+                        "New balance: $" + currentUser.getBalance() + "\n" +
+                        "New confidence level: " + String.format("%.2f", finalWinner.getConfidence()) + "\n" +
+                        "Races won: " + finalWinner.getRacesWon() + " of " + finalWinner.getRacesAttended(),
+                        "Race Finished",
+                        JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    statusLabel.setText(finalWinner.getName() + " wins! You lost $" + betAmount + "!");
+                    JOptionPane.showMessageDialog(this,
+                        finalWinner.getName() + " has won the race!\n" +
+                        "You lost $" + betAmount + "\n" +
+                        "New balance: $" + currentUser.getBalance() + "\n" +
+                        "New confidence level: " + String.format("%.2f", finalWinner.getConfidence()) + "\n" +
+                        "Races won: " + finalWinner.getRacesWon() + " of " + finalWinner.getRacesAttended(),
+                        "Race Finished",
+                        JOptionPane.INFORMATION_MESSAGE);
+                }
+                UserManager.saveUsers();
             });
         } else if (allHorsesFallen()) {
             SwingUtilities.invokeLater(() -> {
