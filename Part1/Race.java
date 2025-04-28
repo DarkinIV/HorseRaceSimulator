@@ -37,6 +37,11 @@ public class Race
      */
     public void addHorse(Horse theHorse, int laneNumber)
     {
+        if (theHorse == null) {
+            System.out.println("Cannot add a null horse.");
+            return;
+        }
+        
         if (laneNumber == 1)
         {
             lane1Horse = theHorse;
