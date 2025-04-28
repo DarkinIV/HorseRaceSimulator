@@ -66,7 +66,7 @@ public class MainWindow extends JFrame {
         // Add action listeners
         barnButton.addActionListener(e -> visitBarn());
         trackButton.addActionListener(e -> selectTrack());
-        raceButton.addActionListener(e -> startRace());
+        raceButton.addActionListener(e -> startRaceGUI());
         statsButton.addActionListener(e -> showBettingStats());
         
         // Add buttons to panel
@@ -158,7 +158,7 @@ public class MainWindow extends JFrame {
         statsFrame.setVisible(true);
     }
 
-    private void startRace() {
+    private void startRaceGUI() {
         // Load available horses and tracks
         java.util.List<Horse> availableHorses = loadHorses();
         java.util.List<Track> availableTracks = TrackManager.loadTracks();
