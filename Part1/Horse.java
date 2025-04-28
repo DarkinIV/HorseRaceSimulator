@@ -16,9 +16,6 @@ public class Horse
     
     
     //Constructor of class Horse
-    /**
-     * Constructor for objects of class Horse
-     */
     public Horse(char horseSymbol, String horseName, double horseConfidence)
     {
         this.horseSymbol = horseSymbol;
