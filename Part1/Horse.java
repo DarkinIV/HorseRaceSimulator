@@ -67,10 +67,16 @@ public class Horse
         this.distanceTravelled += 1;
     }
 
-    public void setConfidence(double newConfidence)
-    {
-        this.horseConfidence = newConfidence;
+    public void setConfidence(double newConfidence) {
+        if (newConfidence < 0) {
+            this.horseConfidence = 0;
+        } else if (newConfidence > 1) {
+            this.horseConfidence = 1;
+        } else {
+            this.horseConfidence = newConfidence;
+        }
     }
+    
     
     public void setSymbol(char newSymbol)
     {
